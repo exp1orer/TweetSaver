@@ -1,1 +1,1 @@
-00 9,11,13,15,17,19 * * * ~/Documents/Tweetsaver/tweetsaver_cron_job.sh
+00,15,30,45 * * * * ~/Documents/Tweetsaver/Cron/tweetsaver_cron_job.sh

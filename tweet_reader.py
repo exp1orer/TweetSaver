@@ -19,8 +19,8 @@ class TweetBlogger():
         self.log = self.home_dir + 'logs.txt'
 
     def _get_client(self):
-        oath_file = self.credentials_directory + 'twitter_oauth_tokens'
-        tokens = ast.literal_eval(open(oath_file).read())
+        oauth_file = self.credentials_directory + 'twitter_oauth_tokens'
+        tokens = ast.literal_eval(open(oauth_file).read())
         consumer_key = tokens['consumer_key']
         consumer_secret = tokens['consumer_secret']
 
@@ -36,14 +36,18 @@ class TweetBlogger():
         return api
 
     def record_now(self):
-        home_timeline = self.client.GetHomeTimeline(count=200)
-        now = datetime.datetime.utcnow()
 
         try:
             archive_file = open(self.archive_filepath,'r')
             archive = cPickle.load(archive_file)
         except IOError:
             archive = {}
+
+        if not self._is_time_to_record(archive.keys()):
+            return
+
+        home_timeline = self.client.GetHomeTimeline(count=200)
+        now = datetime.datetime.utcnow()
         archive[now] = home_timeline
 
         cPickle.dump(archive,open(self.archive_filepath,'w'))
@@ -78,6 +82,21 @@ class TweetBlogger():
             f.write(str({'date': datetime.datetime.today(),
                          'operation': operation,
                          'entry': entry}))
+
+    def _is_time_to_record(self,archive_times):
+        current_time_local = datetime.datetime.now()
+        if not 9<=current_time_local.hour <= 19:
+            return False
+        if len(archive_times) == 0:
+            return True
+
+        current_time_utc = datetime.datetime.utcnow()
+
+        most_recent_archive_entry = sorted(archive_times)[-1]
+        time_since_last_archive = current_time_utc - most_recent_archive_entry
+        seconds_since_last_archive = time_since_last_archive.total_seconds()
+        return seconds_since_last_archive > 60*60*2
+
 
 
 def main():
