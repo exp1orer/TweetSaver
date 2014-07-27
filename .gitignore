@@ -1,7 +1,6 @@
 .idea*
-
+Credentials*
+logs*
 # watchlist:
 # .pyc
-# log
 # archive could go here and then be ignored
-# credentials, too

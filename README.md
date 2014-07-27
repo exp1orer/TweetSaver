@@ -9,4 +9,4 @@ TweetSaver is currently implemented as a class TweetBlogger with two public meth
 
 record_now() saves your current home timeline in JSON to an archive location of your choosing. view_old_timeline() is not ready for use yet. The first version will likely use the Storify API to create a "story" that is your saved tweets from N days ago.
 
-I run record_now() as a cron job every few hours.
+I run record_now() as a cron job every few hours. Run the following command in the command line to set this up: 'crontab *DIRECTORY*/TweetSaver/Cron/crontab.txt'. You can use 'crontab -e' to verify.
