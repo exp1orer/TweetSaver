@@ -25,11 +25,11 @@ class TweetBlogger():
     def __init__(self):
         self.home_dir = os.path.expanduser('~/Documents/Tweetsaver/')
         self.credentials_directory = self.home_dir + 'Credentials/'
-        self.client = self.get_client()
+        self.client = self._get_client()
         self.archive = os.path.expanduser('~/Box Sync/Tweetsaver/Tweets')
         self.log = self.home_dir + 'logs.txt'
 
-    def get_client(self):
+    def _get_client(self):
         oath_file = self.credentials_directory + 'twitter_oauth_tokens'
         tokens = ast.literal_eval(open(oath_file).read())
         consumer_key = tokens['consumer_key']
@@ -56,19 +56,19 @@ class TweetBlogger():
         with open(todays_record, "w") as f:
             f.write(str(home_timeline))
 
-        self.write_log(operation='write',
+        self._write_log(operation='write',
                        entry = '# tweets: ' + str(len(home_timeline)))
 
-    def output_two_months_ago(self):
+    def get_archive(self,days_ago=60):
         archive = os.listdir(self.archive)
         now = datetime.datetime.now()
-        date_to_retrieve = now.date() - datetime.timedelta(60)
+        date_to_retrieve = now.date() - datetime.timedelta(days=days_ago)
         file_name = str(date_to_retrieve) + ' h' + str(now.hour) + '.txt'
 
         log_entry = []
         if file_name not in archive:
             log_entry.append('No timelines with correct name')
-            self.write_log(operation='read',entry=log_entry)
+            self._write_log(operation='read',entry=log_entry)
             return None
 
         log_entry.append('Found a timeline')
@@ -77,10 +77,10 @@ class TweetBlogger():
 
         timeline = [json.loads(tweet) for tweet in timeline]
 
-        self.write_log(operation='read',
+        self._write_log(operation='read',
                        entry=log_entry)
 
-    def write_log(self,operation,entry):
+    def _write_log(self,operation,entry):
         with open(self.log,'a') as f:
             f.write('\n')
             f.write(str({'date': datetime.datetime.today(),
@@ -91,7 +91,7 @@ class TweetBlogger():
 def main():
     blogger = TweetBlogger()
     blogger.record_now()
-    blogger.output_two_months_ago()
+    blogger.get_archive()
 
 
 main()
