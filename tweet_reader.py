@@ -11,7 +11,7 @@ Created on 7/16/14
         # archive
     # change read-script:
         #any over 2 months old?
-        #take the most recent.
+        # if yes take the most recent.
 #TODO: Json the tweet-writing
     # and perhaps all into one file?
 
@@ -23,18 +23,19 @@ import datetime
 
 class TweetBlogger():
     def __init__(self):
-        self.file_path = os.path.expanduser('~/Box Sync/Tweetsaver/')
+        self.home_dir = os.path.expanduser('~/Documents/Tweetsaver/')
+        self.credentials_directory = self.home_dir + 'Credentials/'
         self.client = self.get_client()
-        self.archive = self.file_path + 'Tweets/'
-        self.log = self.file_path + 'logs.txt'
+        self.archive = os.path.expanduser('~/Box Sync/Tweetsaver/Tweets')
+        self.log = self.home_dir + 'logs.txt'
 
     def get_client(self):
-        oath_file = self.file_path + 'Code/twitter_oauth_tokens'
+        oath_file = self.credentials_directory + 'twitter_oauth_tokens'
         tokens = ast.literal_eval(open(oath_file).read())
         consumer_key = tokens['consumer_key']
         consumer_secret = tokens['consumer_secret']
 
-        MY_TWITTER_CREDS = self.file_path + 'Code/.app_credentials'
+        MY_TWITTER_CREDS = self.credentials_directory + '.app_credentials'
 
         oauth_token, oauth_secret = open(MY_TWITTER_CREDS).read().split('\n')
 
