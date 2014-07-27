@@ -59,26 +59,26 @@ class TweetBlogger():
         self._write_log(operation='write',
                        entry = '# tweets: ' + str(len(home_timeline)))
 
-    def get_archive(self,days_ago=60):
-        archive = os.listdir(self.archive)
-        now = datetime.datetime.now()
-        date_to_retrieve = now.date() - datetime.timedelta(days=days_ago)
-        file_name = str(date_to_retrieve) + ' h' + str(now.hour) + '.txt'
-
-        log_entry = []
-        if file_name not in archive:
-            log_entry.append('No timelines with correct name')
-            self._write_log(operation='read',entry=log_entry)
-            return None
-
-        log_entry.append('Found a timeline')
-        timeline = ast.literal_eval(open(self.archive + file_name, 'r').read())
-        log_entry.append('# tweets: ' + str(len(timeline)))
-
-        timeline = [json.loads(tweet) for tweet in timeline]
-
-        self._write_log(operation='read',
-                       entry=log_entry)
+    # def get_archive(self,days_ago=60):
+    #     archive = os.listdir(self.archive)
+    #     now = datetime.datetime.now()
+    #     date_to_retrieve = now.date() - datetime.timedelta(days=days_ago)
+    #     file_name = str(date_to_retrieve) + ' h' + str(now.hour) + '.txt'
+    #
+    #     log_entry = []
+    #     if file_name not in archive:
+    #         log_entry.append('No timelines with correct name')
+    #         self._write_log(operation='read',entry=log_entry)
+    #         return None
+    #
+    #     log_entry.append('Found a timeline')
+    #     timeline = ast.literal_eval(open(self.archive + file_name, 'r').read())
+    #     log_entry.append('# tweets: ' + str(len(timeline)))
+    #
+    #     timeline = [json.loads(tweet) for tweet in timeline]
+    #
+    #     self._write_log(operation='read',
+    #                    entry=log_entry)
 
     def _write_log(self,operation,entry):
         with open(self.log,'a') as f:
@@ -91,7 +91,7 @@ class TweetBlogger():
 def main():
     blogger = TweetBlogger()
     blogger.record_now()
-    blogger.get_archive()
+    # blogger.get_archive()
 
 
 main()
