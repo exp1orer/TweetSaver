@@ -3,30 +3,19 @@ Created on 7/16/14
 @author: Louis Potok (louispotok@gmail.com)
 """
 
-#TODO: more fault tolerance
-    # change crontab to every 15 minutes
-    # change script to:
-        # if time is within the range
-        # and no archive in the last 2 hours
-        # archive
-    # change read-script:
-        #any over 2 months old?
-        # if yes take the most recent.
-#TODO: Json the tweet-writing
-    # and perhaps all into one file?
 
 import os
 import twitter
-import json
 import ast
 import datetime
+import cPickle
 
 class TweetBlogger():
     def __init__(self):
         self.home_dir = os.path.expanduser('~/Documents/Tweetsaver/')
         self.credentials_directory = self.home_dir + 'Credentials/'
         self.client = self._get_client()
-        self.archive = os.path.expanduser('~/Box Sync/Tweetsaver/Tweets')
+        self.archive_filepath = os.path.expanduser('~/Box Sync/Tweetsaver/Tweets/tweet_archive.pkl')
         self.log = self.home_dir + 'logs.txt'
 
     def _get_client(self):
@@ -48,13 +37,16 @@ class TweetBlogger():
 
     def record_now(self):
         home_timeline = self.client.GetHomeTimeline(count=200)
-        home_timeline = [str(status) for status in home_timeline]
+        now = datetime.datetime.utcnow()
 
-        now = datetime.datetime.now()
-        file_name = str(now.date()) + ' h' + str(now.hour)
-        todays_record = self.archive + file_name + '.txt'
-        with open(todays_record, "w") as f:
-            f.write(str(home_timeline))
+        try:
+            archive_file = open(self.archive_filepath,'r')
+            archive = cPickle.load(archive_file)
+        except IOError:
+            archive = {}
+        archive[now] = home_timeline
+
+        cPickle.dump(archive,open(self.archive_filepath,'w'))
 
         self._write_log(operation='write',
                        entry = '# tweets: ' + str(len(home_timeline)))
