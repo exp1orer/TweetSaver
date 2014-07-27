@@ -1,6 +1,5 @@
 .idea*
 Credentials*
 logs*
-# watchlist:
-# .pyc
-# archive could go here and then be ignored
+to-dos.txt
+*.pyc
