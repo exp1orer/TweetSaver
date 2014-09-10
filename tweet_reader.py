@@ -15,7 +15,7 @@ class TweetBlogger():
         self.home_dir = os.path.expanduser('~/Documents/Tweetsaver/')
         self.credentials_directory = self.home_dir + 'Credentials/'
         self.client = self._get_client()
-        self.archive_filepath = os.path.expanduser('~/Box Sync/Tweetsaver/Tweets/tweet_archive.pkl')
+        self.archive_directory = os.path.expanduser('~/Box Sync/Tweetsaver/Tweets/')
         self.log = self.home_dir + 'logs.txt'
 
     def _get_client(self):
@@ -36,26 +36,31 @@ class TweetBlogger():
         return api
 
     def record_now(self):
-
-        try:
-            archive_file = open(self.archive_filepath,'r')
-            archive = cPickle.load(archive_file)
-        except IOError:
-            archive = {}
+        archive = self.get_archive()
 
         if not self._is_time_to_record(archive.keys()):
             return
 
         home_timeline = self.client.GetHomeTimeline(count=200)
         now = datetime.datetime.utcnow()
-        archive[now] = home_timeline
+        current_archive = {now: home_timeline}
+        file_name = now.strftime('%Y-%m-%d h%H')
+        filepath_for_archive = self.archive_directory+file_name+'.pkl'
 
-        cPickle.dump(archive,open(self.archive_filepath,'w'))
+        cPickle.dump(current_archive,open(filepath_for_archive,'w'))
 
         self._write_log(operation='write',
                        entry = '# tweets: ' + str(len(home_timeline)))
 
-    # def get_archive(self,days_ago=60):
+    def get_archive(self):
+        archive_files = [f for f in os.listdir(self.archive_directory) if '.pkl' in f]
+        archive = {}
+        for f in archive_files:
+            rel_archive = cPickle.load(open(self.archive_directory + f))
+            archive.update(rel_archive)
+        return archive
+
+    # def play_with_archive(self,days_ago=60):
     #     archive = os.listdir(self.archive)
     #     now = datetime.datetime.now()
     #     date_to_retrieve = now.date() - datetime.timedelta(days=days_ago)
