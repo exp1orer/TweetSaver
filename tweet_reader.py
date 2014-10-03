@@ -40,8 +40,10 @@ class TweetBlogger():
 
         if not self._is_time_to_record(archive.keys()):
             return
-
-        home_timeline = self.client.GetHomeTimeline(count=200)
+        try:
+            home_timeline = self.client.GetHomeTimeline(count=200)
+        except twitter.error.TwitterError:
+            return
         now = datetime.datetime.utcnow()
         current_archive = {now: home_timeline}
         file_name = now.strftime('%Y-%m-%d h%H')
