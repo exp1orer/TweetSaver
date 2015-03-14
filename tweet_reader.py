@@ -9,16 +9,21 @@ import twitter
 import ast
 import datetime
 import cPickle
+import pymongo
 
 class TweetBlogger():
     def __init__(self):
         self.home_dir = os.path.expanduser('~/Documents/Tweetsaver/')
         self.credentials_directory = self.home_dir + 'Credentials/'
-        self.client = self._get_client()
+        self.twitter_client = self._get_twitter_client()
+        self.mongo_client = self._get_mongo_client()
         self.archive_directory = os.path.expanduser('~/Box Sync/Tweetsaver/Tweets/')
         self.log = self.home_dir + 'logs.txt'
 
-    def _get_client(self):
+    def _get_mongo_client(self):
+        return pymongo.MongoClient('192.168.42.64',27000)
+
+    def _get_twitter_client(self):
         oauth_file = self.credentials_directory + 'twitter_oauth_tokens'
         tokens = ast.literal_eval(open(oauth_file).read())
         consumer_key = tokens['consumer_key']
@@ -41,7 +46,7 @@ class TweetBlogger():
         if not self._is_time_to_record(archive.keys()):
             return
         try:
-            home_timeline = self.client.GetHomeTimeline(count=200)
+            home_timeline = self.twitter_client.GetHomeTimeline(count=200)
         except twitter.error.TwitterError:
             return
         now = datetime.datetime.utcnow()
