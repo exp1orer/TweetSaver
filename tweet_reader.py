@@ -105,11 +105,11 @@ class TweetBlogger():
         return seconds_since_last_archive > 60*60*2
 
 
-
 def main():
     blogger = TweetBlogger()
     blogger.record_now()
     # blogger.get_archive()
 
 
-main()
+if __name__ == '__main__':
+    main()
