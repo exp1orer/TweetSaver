@@ -17,11 +17,19 @@ class TweetBlogger():
         self.credentials_directory = self.home_dir + 'Credentials/'
         self.twitter_client = self._get_twitter_client()
         self.mongo_client = self._get_mongo_client()
+        self.tweet_storage = self._get_tweet_storage()
+        self.log_storage = self._get_log_storage()
         self.archive_directory = os.path.expanduser('~/Box Sync/Tweetsaver/Tweets/')
         self.log = self.home_dir + 'logs.txt'
 
     def _get_mongo_client(self):
-        return pymongo.MongoClient('192.168.42.64',27000)
+        return pymongo.MongoClient('louismbp',27000)
+
+    def _get_tweet_storage(self):
+        return self.mongo_client.tweetsaver.tweets
+
+    def _get_log_storage(self):
+        return self.mongo_client.tweetsaver.logs
 
     def _get_twitter_client(self):
         oauth_file = self.credentials_directory + 'twitter_oauth_tokens'
@@ -41,23 +49,81 @@ class TweetBlogger():
         return api
 
     def record_now(self):
-        archive = self.get_archive()
-
-        if not self._is_time_to_record(archive.keys()):
-            return
         try:
             home_timeline = self.twitter_client.GetHomeTimeline(count=200)
         except twitter.error.TwitterError:
             return
-        now = datetime.datetime.utcnow()
-        current_archive = {now: home_timeline}
-        file_name = now.strftime('%Y-%m-%d h%H')
-        filepath_for_archive = self.archive_directory+file_name+'.pkl'
+        prepared_timeline = self._prepare_timeline_for_insert(home_timeline)
 
-        cPickle.dump(current_archive,open(filepath_for_archive,'w'))
+        self.tweet_storage.insert(prepared_timeline)
+        log = {'time': datetime.datetime.utcnow(),
+               'entry': {'operation': 'write',
+                         'number_tweets': str(len(prepared_timeline))}}
 
-        self._write_log(operation='write',
-                       entry = '# tweets: ' + str(len(home_timeline)))
+        self.log_storage.insert(log)
+
+    def _prepare_timeline_for_insert(self,timeline):
+        new_timeline = []
+        for status in timeline:
+            tweet = self._prepare_tweet_for_insert(status)
+
+            new_timeline.append(d)
+        return new_timeline
+
+    def _prepare_tweet_for_insert(self,s):
+        #mostly because mongo cannot accept field names with a '.' in them.
+        # https://dev.twitter.com/overview/api/tweets is useful
+        raw_tweet = s.AsDict()
+        prepared_tweet = {}
+        safe_fields = ['contributors',
+                       'coordinates',
+                       'created_at',
+                       'current_user_retweet',
+                       'favorite_count',
+                       'favorited',
+                       'filter_level'
+                       'id_str',
+                       'in_reply_to_screen_name',
+                       'in_reply_to_status_id_str',
+                       'in_reply_to_user_id_str',
+                       'lang',
+                       'place',
+                       'possibly_sensitive',
+                       'scopes',
+                       'retweet_count',
+                       'retweeted',
+                       'retweeted_status',
+                       'source',
+                       'text',
+                       # 'truncated', # From the docs: Since Twitter now rejects long Tweets vs truncating them, the large majority of Tweets will have this set to false.
+                       'user',
+                       'withheld_copyright',
+                       'withheld_in_countries',
+                       'withheld_scope'
+
+                       #entities https://dev.twitter.com/overview/api/entities
+                       'hashtags',
+                       'media',
+                       'user_mentions'
+                       ]
+        unsafe_fields = ['urls']
+        for f in safe_fields:
+            result = raw_tweet.get(f)
+            if result:
+                prepared_tweet[f] = result
+        return prepared_tweet
+
+        # possible ways to deal with the URLS:
+            # replace the dot with something special e.g. LOUISHATESTWITTER
+            # refactor from {u'short_url_1': 'long_url_1',
+            #                  'short_url_2': 'long_url_2'}
+            # to something like ((short_url_1,long_url_1'),
+            #                    (short_url_2,long_url_2'))
+            # unfortunately...twitter API does not seem to be consistent
+
+
+
+
 
     def get_archive(self):
         archive_files = [f for f in os.listdir(self.archive_directory) if '.pkl' in f]
@@ -96,6 +162,7 @@ class TweetBlogger():
                          'entry': entry}))
 
     def _is_time_to_record(self,archive_times):
+        #TODO: use the timestamp from the ObjectIds
         current_time_local = datetime.datetime.now()
         if not 9<=current_time_local.hour <= 19:
             return False
